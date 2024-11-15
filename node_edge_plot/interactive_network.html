@@ -74,21 +74,9 @@
                 }
             }));
         } else {
-            let nodes = {
-                'A': {id: 'A', label: 'A', color: {background: '#ff0000', border: '#ff0000'}, size: 20, shape: 'star'},
-                'B': {id: 'B', label: 'B', color: {background: '#0000ff', border: '#0000ff'}, size: 15, shape: 'dot'},
-                'C': {id: 'C', label: 'C', color: {background: '#00ff00', border: '#00ff00'}, size: 25, shape: 'triangle'},
-                'D': {id: 'D', label: 'D', color: {background: '#800080', border: '#800080'}, size: 10, shape: 'square'},
-            };
+            let nodes = {"A": {"id": "A", "label": "A", "color": {"background": "#ff0000", "border": "#ff0000"}, "size": 20, "shape": "star"}, "B": {"id": "B", "label": "B", "color": {"background": "#0000ff", "border": "#0000ff"}, "size": 15, "shape": "dot"}, "C": {"id": "C", "label": "C", "color": {"background": "#00ff00", "border": "#00ff00"}, "size": 25, "shape": "triangle"}, "D": {"id": "D", "label": "D", "color": {"background": "#800080", "border": "#800080"}, "size": 10, "shape": "square"}};
+            let edges = {"A-B": {"from": "A", "to": "B", "label": "A-B", "color": "#ffa500", "width": 3, "arrows": {"to": true}, "length": 300}, "A-C": {"from": "A", "to": "C", "label": "A-C", "color": "#808080", "width": 2, "arrows": {"from": true}, "length": 200}, "B-D": {"from": "B", "to": "D", "label": "B-D", "color": "#000000", "width": 5, "arrows": {"to": true, "from": true}, "length": 250}, "C-D": {"from": "C", "to": "D", "label": "C-D", "color": "#00ffff", "width": 4, "arrows": null, "length": 150}, "A-A": {"from": "A", "to": "A", "label": "A-A", "color": "#ff0000", "width": 2, "arrows": {"to": true}, "length": 100, "selfReferenceSize": 20.0}};
             network.body.data.nodes.add(nodes[nodeId]);
-            let edges = {
-                'A-B': {from: 'A', to: 'B', label: 'A-B', color: '#ffa500', width: 3, arrows: 'to', length: 300},
-                'A-C': {from: 'A', to: 'C', label: 'A-C', color: '#808080', width: 2, arrows: 'from', length: 200},
-                'B-D': {from: 'B', to: 'D', label: 'B-D', color: '#000000', width: 5, arrows: 'to,from', length: 250},
-                'C-D': {from: 'C', to: 'D', label: 'C-D', color: '#00ffff', width: 4, arrows: 'null', length: 150},
-                'A-A': {from: 'A', to: 'A', label: 'A-A', color: '#ff0000', width: 2, arrows: 'to', length: 100, selfReferenceSize: 20.0},
-            };
-
             for (let key in edges) {
                 let edge = edges[key];
                 if ((edge.from === nodeId || edge.to === nodeId) &&

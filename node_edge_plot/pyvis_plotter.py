@@ -1,5 +1,6 @@
 #%% 
 import os
+import json
 from pyvis.network import Network
 import networkx as nx
 
@@ -69,59 +70,69 @@ def create_interactive_network_html(nodes, edges, output_file="interactive_netwo
         button_html += f'    <button onclick="toggleNode(\'{node}\')">Toggle {node}</button>\n'
     button_html += "</div>\n\n"
     
-    # Define the toggleNode function dynamically to add/remove nodes and edges with colors, sizes, shapes, arrows, and lengths
-    toggle_function = """
-<script type="text/javascript">
-    function toggleNode(nodeId) {
-        if (network.body.data.nodes.get(nodeId)) {
-            network.body.data.nodes.remove(nodeId);  // Remove node
-            network.body.data.edges.remove(network.body.data.edges.get({
-                filter: function (edge) {
-                    return edge.from === nodeId || edge.to === nodeId;
-                }
-            }));
-        } else {
-"""
-    # Add nodes dynamically with colors, sizes, and shapes
-    toggle_function += "            let nodes = {\n"
+    # Create nodes and edges dictionaries and serialize them to JSON
+    nodes_dict = {}
     for node, color, size, shape in nodes:
-        color_hex = rgb_to_hex(color)  # Convert color to hex if needed
-        toggle_function += f"                '{node}': {{id: '{node}', label: '{node}', color: {{background: '{color_hex}', border: '{color_hex}'}}, size: {size}, shape: '{shape}'}},\n"
-    toggle_function += "            };\n"
-    toggle_function += "            network.body.data.nodes.add(nodes[nodeId]);\n"
-    
-    # Generate edges dictionary dynamically for reconnection with labels, colors, widths, arrows, and lengths
-    toggle_function += "            let edges = {\n"
-    for src, dst, color, width, arrows, length, label in edges:
-        color_hex = rgb_to_hex(color)  # Convert color to hex if needed
-        arrow_type = "null"
-        if arrows == "to":
-            arrow_type = "to"
-        elif arrows == "from":
-            arrow_type = "from"
-        elif arrows == "both":
-            arrow_type = "to,from"
-        edge_params = f"from: '{src}', to: '{dst}', label: '{label}', color: '{color_hex}', width: {width}, arrows: '{arrow_type}', length: {length}"
-        if src == dst:
-            # Adjust the self-loop size using selfReferenceSize
-            edge_params += f", selfReferenceSize: {length / 5}"  # Adjust the divisor as needed
-        toggle_function += f"                '{src}-{dst}': {{{edge_params}}},\n"
-    toggle_function += "            };\n"
+        color_hex = rgb_to_hex(color)
+        nodes_dict[node] = {
+            'id': node,
+            'label': node,
+            'color': {'background': color_hex, 'border': color_hex},
+            'size': size,
+            'shape': shape
+        }
 
-    # Add JavaScript to re-add edges connected to the node being toggled with labels, colors, widths, arrows, and lengths
-    toggle_function += """
-            for (let key in edges) {
+    edges_dict = {}
+    for src, dst, color, width, arrows, length, label in edges:
+        color_hex = rgb_to_hex(color)
+        arrow_type = None
+        if arrows == "to":
+            arrow_type = {"to": True}
+        elif arrows == "from":
+            arrow_type = {"from": True}
+        elif arrows == "both":
+            arrow_type = {"to": True, "from": True}
+        edge_data = {
+            'from': src,
+            'to': dst,
+            'label': label,
+            'color': color_hex,
+            'width': width,
+            'arrows': arrow_type,
+            'length': length
+        }
+        if src == dst:
+            edge_data['selfReferenceSize'] = length / 5  # Adjust the divisor as needed
+        edge_key = f"{src}-{dst}"
+        edges_dict[edge_key] = edge_data
+    
+    # Define the toggleNode function with serialized JSON data
+    toggle_function = f"""
+<script type="text/javascript">
+    function toggleNode(nodeId) {{
+        if (network.body.data.nodes.get(nodeId)) {{
+            network.body.data.nodes.remove(nodeId);  // Remove node
+            network.body.data.edges.remove(network.body.data.edges.get({{
+                filter: function (edge) {{
+                    return edge.from === nodeId || edge.to === nodeId;
+                }}
+            }}));
+        }} else {{
+            let nodes = {json.dumps(nodes_dict)};
+            let edges = {json.dumps(edges_dict)};
+            network.body.data.nodes.add(nodes[nodeId]);
+            for (let key in edges) {{
                 let edge = edges[key];
                 if ((edge.from === nodeId || edge.to === nodeId) &&
-                    !network.body.data.edges.get().find(e => e.from === edge.from && e.to === edge.to)) {
+                    !network.body.data.edges.get().find(e => e.from === edge.from && e.to === edge.to)) {{
                     network.body.data.edges.add(edge);
-                }
-            }
-        }
-    }
+                }}
+            }}
+        }}
+    }}
 </script>
 """
-
+    
     # Combine everything: base HTML, CSS, button HTML, and toggle function
     full_html = html_content.replace("<body>", "<body>" + css_style + button_html + toggle_function)
     
@@ -133,6 +144,9 @@ def create_interactive_network_html(nodes, edges, output_file="interactive_netwo
     os.remove(base_html)
 
     print(f"Interactive network with toggle buttons saved as {output_file}")
+
+
+
 
 if __name__ == "__main__":
     # RGB colors are now supported in both nodes and edges
